@@ -20,18 +20,27 @@
             <ValueType>Length</ValueType>
         </Parameter>
 		
+		<Parameter>
+			
+            <Name>CutBottLength</Name>
+            <Text>Длина среза нижней части</Text>
+            <Value>160.</Value>
+            <ValueType>Length</ValueType>
+        </Parameter>
+		
+		 <Parameter>
+			 
+            <Name>BottHei</Name>
+            <Text>Высота нижней части</Text>
+            <Value>320.</Value>
+            <ValueType>Length</ValueType>
+        </Parameter>
+		
         <Parameter>
 			
             <Name>BottomWid</Name>
             <Text>Ширина нижней части</Text>
             <Value>480.</Value>
-            <ValueType>Length</ValueType>
-        </Parameter>
-		
-        <Parameter>
-            <Name>CutBottLength</Name>
-            <Text>Длина среза нижней части</Text>
-            <Value>160.</Value>
             <ValueType>Length</ValueType>
         </Parameter>
 		
@@ -42,12 +51,7 @@
             <ValueType>Length</ValueType>
         </Parameter>
 		
-        <Parameter>
-            <Name>BottHei</Name>
-            <Text>Высота нижней части</Text>
-            <Value>320.</Value>
-            <ValueType>Length</ValueType>
-        </Parameter>
+       
 		
     </Page>
 	
@@ -56,6 +60,22 @@
 		
         <Name>Middle part</Name>
         <Text>Средняя часть</Text>
+		
+		 <Parameter>
+			 
+            <Name>CenterWidLength</Name>
+            <Text>Длина более толстой части</Text>
+            <Value>300.</Value>
+            <ValueType>Length</ValueType>
+        </Parameter>
+		
+		  <Parameter>
+			  
+            <Name>WidthTinyPart</Name>
+            <Text>Толщина тонкой части</Text>
+            <Value>50.</Value>
+            <ValueType>Length</ValueType>
+        </Parameter>
 		
         <Parameter>
 			
@@ -66,34 +86,29 @@
         </Parameter>
 		
         <Parameter>
-            <Name>CenterWidLength</Name>
-            <Text>Длина более толстой части</Text>
-            <Value>300.</Value>
-            <ValueType>Length</ValueType>
-        </Parameter>
-		
-        <Parameter>
             <Name>TransitLength</Name>
             <Text>Длина перехода</Text>
             <Value>300.</Value>
             <ValueType>Length</ValueType>
         </Parameter>
 		
-        <Parameter>
-            <Name>WidthTinyPart</Name>
-            <Text>Толщина тонкой части</Text>
-            <Value>50.</Value>
-            <ValueType>Length</ValueType>
-        </Parameter>
-		
-    </Page>
+      
+		 </Page>
 	
 	
-    <Page>
+         <Page>
 		
         <Name>Top part</Name>
         <Text>Верхняя часть</Text>
         
+		<Parameter>
+			
+            <Name>HeiTopCut</Name>
+            <Text>Высота среза верхней части</Text>
+            <Value>220.</Value>
+            <ValueType>Length</ValueType>
+        </Parameter>
+			 
 		<Parameter>
 			
             <Name>TopWid</Name>
@@ -103,27 +118,23 @@
         </Parameter>
 		
         <Parameter>
-            <Name>HeiTop</Name>
-            <Text>Высота верхней части</Text>
-            <Value>350.</Value>
-            <ValueType>Length</ValueType>
-        </Parameter>
-		
-        <Parameter>
-            <Name>HeiTopCut</Name>
-            <Text>Высота среза верхней части</Text>
-            <Value>220.</Value>
-            <ValueType>Length</ValueType>
-        </Parameter>
-		
-        <Parameter>
+			
             <Name>PlateHei</Name>
             <Text>Высота плитки</Text>
             <Value>40.</Value>
             <ValueType>Length</ValueType>
         </Parameter>
-		
+			 
+		 <Parameter>
+			 
+            <Name>HeiTop</Name>
+            <Text>Высота верхней части</Text>
+            <Value>350.</Value>
+            <ValueType>Length</ValueType>
+        </Parameter>
+			 
         <Parameter>
+			
             <Name>Identat=</Name>
             <Text>Отступ плитки</Text>
             <Value>60.</Value>

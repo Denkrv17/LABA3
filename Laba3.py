@@ -7,16 +7,16 @@ from HandleDirection import HandleDirection
 from HandleProperties import HandleProperties
 
 
-def check_allplan_version(build_ele, version):
-    del build_ele
+def check_allplan_version(sozd_element, version):
+    del sozd_element
     del version
     return True
 
 
-def create_element(build_ele, doc):
+def create_element(sozd_element, doc):
 
     element = LABA3(doc)
-    return element.create(build_ele)
+    return element.create(sozd_element)
 
 
 class LABA3:
@@ -28,571 +28,542 @@ class LABA3:
         self.handle_list = []
         self.document = doc
 
-    def create(self, build_ele):
+    def create(self, sozd_element):
 
-        self.connect_all_parts(build_ele)
-        self.create_down_part_LABA3(build_ele)
+        self.build_pr_wchasts(sozd_element)
+        self.create_nizhnya_chast_LABA3(sozd_element)
         return (self.model_ele_list, self.handle_list)
 
-    def connect_all_parts(self, build_ele):
+    def build_pr_wchasts(self, sozd_element):
 
-        com_prop = AllplanBaseElements.CommonProperties()
-        com_prop.GetGlobalProperties()
-        com_prop.Pen = 1
-        com_prop.Color = 3
-        com_prop.Stroke = 1
-        circle_bottom = self.create_down_part_LABA3(build_ele)
-        circle_center = self.create_central_part_LABA3(build_ele)
-        circle_top = self.create_top_part_LABA3(build_ele)
-        err, circle = AllplanGeo.MakeUnion(circle_bottom, circle_center)
-        if err:
+        commad_propertis = AllplanBaseElements.CommonProperties()
+        commad_propertis.GetGlobalProperties()
+        commad_propertis.Pen = 1
+        commad_propertis.Color = 3
+        commad_propertis.Stroke = 1
+        kolo_bottom = self.create_nizhnya_chast_LABA3(sozd_element)
+        kolo_center = self.create_central_chast_LABA3(sozd_element)
+        kolo_vehniy = self.create_vehniy_chast_LABA3(sozd_element)
+        pomylka, kolo = AllplanGeo.MakeUnion(kolo_bottom, kolo_center)
+        if pomylka:
             return
 
-        err, circle = AllplanGeo.MakeUnion(circle, circle_top)
-        if err:
+        pomylka, kolo = AllplanGeo.MakeUnion(kolo, kolo_vehniy)
+        if pomylka:
             return 
 
         self.model_ele_list.append(
-            AllplanBasisElements.ModelElement3D(com_prop, circle))
+            AllplanBasisElements.ModelElement3D(commad_propertis, kolo))
 
-    # must be updated
-    def create_down_part_LABA3(self, build_ele):
-
-        circle = self.down_part_addi_1(build_ele)
-        err, circle = AllplanGeo.MakeUnion(circle, self.down_part_addi_2(build_ele))
-        err, circle = AllplanGeo.MakeUnion(circle, self.down_part_addi_3(build_ele))
-        err, circle = AllplanGeo.MakeUnion(circle, self.down_part_addi_4(build_ele))
-        err, circle = AllplanGeo.MakeUnion(circle, self.down_part_addi_2_2(build_ele))
-        err, circle = AllplanGeo.MakeUnion(circle, self.down_part_addi_3_2(build_ele))
-        err, circle = AllplanGeo.MakeUnion(circle, self.down_part_addi_4_2(build_ele))
-        err, circle = AllplanGeo.MakeUnion(circle, self.down_part_addi_2_3(build_ele))
-        err, circle = AllplanGeo.MakeUnion(circle, self.down_part_addi_3_3(build_ele))
-        err, circle = AllplanGeo.MakeUnion(circle, self.down_part_addi_2_4(build_ele))
-        err, circle = AllplanGeo.MakeUnion(circle, self.down_part_addi_3_4(build_ele))
-        err, circle = AllplanGeo.MakeUnion(circle, self.last_down_part(build_ele))
-        return circle
-
-    def create_central_part_LABA3(self, build_ele):
-
-        base_pol = AllplanGeo.Polygon3D()
-        base_pol += AllplanGeo.Point3D(0, build_ele.CutBottLength.value, build_ele.BottHei.value)
-        base_pol += AllplanGeo.Point3D(0, build_ele.BottomWid.value - build_ele.CutBottLength.value, build_ele.BottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value, build_ele.BottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value + build_ele.TransitLength.value, 
-                                        build_ele.BottomWid.value - build_ele.CutBottLength.value - (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, 
-                                        build_ele.BottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - (build_ele.CenterWidLength.value + build_ele.TransitLength.value), 
-                                        build_ele.BottomWid.value - build_ele.CutBottLength.value - (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, 
-                                        build_ele.BottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value,
-                                         build_ele.BottomWid.value - build_ele.CutBottLength.value, 
-                                         build_ele.BottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value, build_ele.BottomWid.value - build_ele.CutBottLength.value, build_ele.BottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value, build_ele.CutBottLength.value, build_ele.BottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.CutBottLength.value, build_ele.BottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value - build_ele.TransitLength.value,
-                                        build_ele.CutBottLength.value + (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, 
-                                        build_ele.BottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value + build_ele.TransitLength.value,
-                                        build_ele.CutBottLength.value + (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, 
-                                        build_ele.BottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value,
-                                        build_ele.CutBottLength.value, 
-                                        build_ele.BottHei.value)
-        base_pol += AllplanGeo.Point3D(0, build_ele.CutBottLength.value, build_ele.BottHei.value)
-
-
-        path = AllplanGeo.Polyline3D()
-        path += AllplanGeo.Point3D(0, build_ele.CutBottLength.value, build_ele.BottHei.value)
-        path += AllplanGeo.Point3D(0, build_ele.CutBottLength.value, build_ele.BottHei.value + build_ele.CenterHei.value)
-
-        err, circle = AllplanGeo.Createcircle(base_pol, path)
-
-        if err:
-            return []
-
-        return circle
-
-    def create_top_part_LABA3(self, build_ele):
-
-        circle = self.top_part_addi_1(build_ele)
-        err, circle = AllplanGeo.MakeUnion(circle, self.top_part_addi_3(build_ele))
-        err, circle = AllplanGeo.MakeUnion(circle, self.top_part_addi_2(build_ele))
-        err, circle = AllplanGeo.MakeUnion(circle, self.top_part_addi_3(build_ele, plus=(build_ele.Length.value - build_ele.CenterWidLength.value)))
-        err, circle = AllplanGeo.MakeUnion(circle, self.top_part_addi_4(build_ele))
-        err, circle = AllplanGeo.MakeUnion(circle, self.top_part_addi_2_2(build_ele))
-        err, circle = AllplanGeo.MakeUnion(circle, self.top_part_addi_4(build_ele, build_ele.BottomWid.value - build_ele.CutBottLength.value * 2, build_ele.TopWid.value, 10))
-        err, circle = AllplanGeo.MakeUnion(circle, self.top_part_addi_2_3(build_ele))
-        err, circle = AllplanGeo.MakeUnion(circle, self.top_part_addi_4_2(build_ele))
-        err, circle = AllplanGeo.MakeUnion(circle, self.top_part_addi_4_2(build_ele, build_ele.BottomWid.value - build_ele.CutBottLength.value * 2, build_ele.TopWid.value, 10))
-        err, circle = AllplanGeo.MakeUnion(circle, self.top_part_addi_3_3(build_ele))
-        err, circle = AllplanGeo.MakeUnion(circle, self.last_top_part(build_ele))
-        return circle
-
-    def top_part_addi_1(self, build_ele):
-
-        base_pol = AllplanGeo.Polygon3D()
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value, 
-                                        build_ele.BottomWid.value - build_ele.CutBottLength.value - (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2,
-                                        build_ele.BottHei.value + build_ele.CenterHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value, 
-                                        build_ele.TopWid.value - (build_ele.TopWid.value - build_ele.BottomWid.value) / 2,
-                                        build_ele.BottHei.value + build_ele.CenterHei.value + build_ele.HeiTopCut.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value, 
-                                        -(build_ele.TopWid.value - build_ele.BottomWid.value) / 2,
-                                        build_ele.BottHei.value + build_ele.CenterHei.value + build_ele.HeiTopCut.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value, 
-                                        build_ele.CutBottLength.value + (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2,
-                                        build_ele.BottHei.value + build_ele.CenterHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value, 
-                                        build_ele.BottomWid.value - build_ele.CutBottLength.value - (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2,
-                                        build_ele.BottHei.value + build_ele.CenterHei.value)
-        path = AllplanGeo.Polyline3D()
-        path += AllplanGeo.Point3D(build_ele.CenterWidLength.value, 
-                                        build_ele.BottomWid.value - build_ele.CutBottLength.value - (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2,
-                                        build_ele.BottHei.value + build_ele.CenterHei.value)
-        path += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, 
-                                        build_ele.BottomWid.value - build_ele.CutBottLength.value - (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2,
-                                        build_ele.BottHei.value + build_ele.CenterHei.value)
-        
-        err, circle = AllplanGeo.Createcircle(base_pol, path)
-
-        if err:
-            return []
-
-        return circle
-
-    def top_part_addi_2(self, build_ele):
-
-        base_pol = AllplanGeo.Polygon3D()
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value, build_ele.BottHei.value + build_ele.CenterHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value - build_ele.TransitLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value - (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2 , build_ele.BottHei.value + build_ele.CenterHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value - build_ele.TransitLength.value - (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2 , build_ele.BottomWid.value - (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2 + (build_ele.TopWid.value - build_ele.BottomWid.value) / 2, build_ele.BottHei.value + build_ele.CenterHei.value + build_ele.HeiTopCut.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value - (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, build_ele.BottomWid.value + (build_ele.TopWid.value - build_ele.BottomWid.value) / 2, build_ele.BottHei.value + build_ele.CenterHei.value + build_ele.HeiTopCut.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value, build_ele.BottHei.value + build_ele.CenterHei.value)
-
-
-        path = AllplanGeo.Polyline3D()
-        path += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value, build_ele.BottHei.value + build_ele.CenterHei.value)
-        path += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value + 10, build_ele.BottomWid.value - build_ele.CutBottLength.value - 10, build_ele.BottHei.value + build_ele.CenterHei.value + 10)
-
-        err, circle = AllplanGeo.Createcircle(base_pol, path)
-
-        
-        if err:
-            return []
-
-        return circle
-
-    def top_part_addi_3(self, build_ele, plus=0):
-
-        base_pol = AllplanGeo.Polygon3D()
-        base_pol += AllplanGeo.Point3D(plus, build_ele.CutBottLength.value, build_ele.BottHei.value + build_ele.CenterHei.value)
-        base_pol += AllplanGeo.Point3D(plus, build_ele.BottomWid.value - build_ele.CutBottLength.value, build_ele.BottHei.value + build_ele.CenterHei.value)
-        base_pol += AllplanGeo.Point3D(plus, build_ele.BottomWid.value + (build_ele.TopWid.value - build_ele.BottomWid.value) / 2, build_ele.BottHei.value + build_ele.CenterHei.value + build_ele.HeiTopCut.value)
-        base_pol += AllplanGeo.Point3D(plus, -(build_ele.TopWid.value - build_ele.BottomWid.value) / 2, build_ele.BottHei.value + build_ele.CenterHei.value + build_ele.HeiTopCut.value)
-        base_pol += AllplanGeo.Point3D(plus, build_ele.CutBottLength.value, build_ele.BottHei.value + build_ele.CenterHei.value)
-
-        path = AllplanGeo.Polyline3D()
-        path += AllplanGeo.Point3D(plus, build_ele.CutBottLength.value, build_ele.BottHei.value + build_ele.CenterHei.value)
-        path += AllplanGeo.Point3D(plus + build_ele.CenterWidLength.value, build_ele.CutBottLength.value, build_ele.BottHei.value + build_ele.CenterHei.value)
-
-        err, circle = AllplanGeo.Createcircle(base_pol, path)
-
-        
-        if err:
-            return []
-
-        return circle
-
-    def top_part_addi_4(self, build_ele, minus_1 = 0, minus_2 = 0, digit = -10):
-
-        base_pol = AllplanGeo.Polygon3D()
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value - minus_1, build_ele.BottHei.value + build_ele.CenterHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.TopWid.value - (build_ele.TopWid.value - build_ele.BottomWid.value) / 2 - minus_2, build_ele.BottHei.value + build_ele.CenterHei.value + build_ele.HeiTopCut.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value - (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, build_ele.BottomWid.value + (build_ele.TopWid.value - build_ele.BottomWid.value) / 2 - minus_2, build_ele.BottHei.value + build_ele.CenterHei.value + build_ele.HeiTopCut.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value - minus_1, build_ele.BottHei.value + build_ele.CenterHei.value)
-
-
-        path = AllplanGeo.Polyline3D()
-        path += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value - minus_1, build_ele.BottHei.value + build_ele.CenterHei.value)
-        path += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value + digit - minus_1, build_ele.BottHei.value + build_ele.CenterHei.value)
-        print(base_pol)
-        print(path)
-        err, circle = AllplanGeo.Createcircle(base_pol, path)
-
-        
-        if err:
-            return []
-
-        return circle
-
-    def top_part_addi_2_2(self, build_ele):
-
-        base_pol = AllplanGeo.Polygon3D()
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.CutBottLength.value, build_ele.BottHei.value + build_ele.CenterHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value - build_ele.TransitLength.value, build_ele.CutBottLength.value + (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, build_ele.BottHei.value + build_ele.CenterHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value - build_ele.TransitLength.value - (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2 - (build_ele.TopWid.value - build_ele.BottomWid.value) / 2, build_ele.BottHei.value + build_ele.CenterHei.value + build_ele.HeiTopCut.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value - (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, -(build_ele.TopWid.value - build_ele.BottomWid.value) / 2, build_ele.BottHei.value + build_ele.CenterHei.value + build_ele.HeiTopCut.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.CutBottLength.value, build_ele.BottHei.value + build_ele.CenterHei.value)
-
-
-        path = AllplanGeo.Polyline3D()
-        path += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.CutBottLength.value, build_ele.BottHei.value + build_ele.CenterHei.value)
-        path += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value + 10, build_ele.CutBottLength.value + 10, build_ele.BottHei.value + build_ele.CenterHei.value + 10)
-
-        err, circle = AllplanGeo.Createcircle(base_pol, path)
-
-        
-        if err:
-            return []
-
-        return circle
-
-    def top_part_addi_2_3(self, build_ele):
-
-        base_pol = AllplanGeo.Polygon3D()
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value, build_ele.BottHei.value + build_ele.CenterHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value + build_ele.TransitLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value - (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, build_ele.BottHei.value + build_ele.CenterHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value + build_ele.TransitLength.value + (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, build_ele.BottomWid.value - (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2 + (build_ele.TopWid.value - build_ele.BottomWid.value) / 2, build_ele.BottHei.value + build_ele.CenterHei.value + build_ele.HeiTopCut.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value + (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, build_ele.BottomWid.value + (build_ele.TopWid.value - build_ele.BottomWid.value) / 2, build_ele.BottHei.value + build_ele.CenterHei.value + build_ele.HeiTopCut.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value, build_ele.BottHei.value + build_ele.CenterHei.value)
-
-
-        path = AllplanGeo.Polyline3D()
-        path += AllplanGeo.Point3D(build_ele.CenterWidLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value, build_ele.BottHei.value + build_ele.CenterHei.value)
-        path += AllplanGeo.Point3D(build_ele.CenterWidLength.value - 10, build_ele.BottomWid.value - build_ele.CutBottLength.value - 10, build_ele.BottHei.value + build_ele.CenterHei.value - 10)
-
-        err, circle = AllplanGeo.Createcircle(base_pol, path)
-
-        
-        if err:
-            return []
-
-        return circle
-
-    def top_part_addi_4_2(self, build_ele, minus_1 = 0, minus_2 = 0, digit = -10):
-
-        base_pol = AllplanGeo.Polygon3D()
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value - minus_1, build_ele.BottHei.value + build_ele.CenterHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value, build_ele.BottomWid.value + (build_ele.TopWid.value - build_ele.BottomWid.value) / 2 - minus_2, build_ele.BottHei.value + build_ele.CenterHei.value + build_ele.HeiTopCut.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value + (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, build_ele.BottomWid.value + (build_ele.TopWid.value - build_ele.BottomWid.value) / 2 - minus_2, build_ele.BottHei.value + build_ele.CenterHei.value + build_ele.HeiTopCut.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value - minus_1, build_ele.BottHei.value + build_ele.CenterHei.value)
-        
-        path = AllplanGeo.Polyline3D()
-        path += AllplanGeo.Point3D(build_ele.CenterWidLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value - minus_1, build_ele.BottHei.value + build_ele.CenterHei.value)
-        path += AllplanGeo.Point3D(build_ele.CenterWidLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value - minus_1 + digit, build_ele.BottHei.value + build_ele.CenterHei.value)
-
-        err, circle = AllplanGeo.Createcircle(base_pol, path)
-
-        if err:
-            return []
-
-        return circle
-
-    def top_part_addi_3_3(self, build_ele):
-
-        base_pol = AllplanGeo.Polygon3D()
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value, build_ele.CutBottLength.value, build_ele.BottHei.value + build_ele.CenterHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value + build_ele.TransitLength.value, build_ele.CutBottLength.value + (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, build_ele.BottHei.value + build_ele.CenterHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value + build_ele.TransitLength.value + (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2 - (build_ele.TopWid.value - build_ele.BottomWid.value) / 2, build_ele.BottHei.value + build_ele.CenterHei.value + build_ele.HeiTopCut.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value + (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, -(build_ele.TopWid.value - build_ele.BottomWid.value) / 2, build_ele.BottHei.value + build_ele.CenterHei.value + build_ele.HeiTopCut.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value, build_ele.CutBottLength.value, build_ele.BottHei.value + build_ele.CenterHei.value)
-
-
-        path = AllplanGeo.Polyline3D()
-        path += AllplanGeo.Point3D(build_ele.CenterWidLength.value, build_ele.CutBottLength.value, build_ele.BottHei.value + build_ele.CenterHei.value)
-        path += AllplanGeo.Point3D(build_ele.CenterWidLength.value - 10, build_ele.CutBottLength.value + 10, build_ele.BottHei.value + build_ele.CenterHei.value - 10)
-
-        err, circle = AllplanGeo.Createcircle(base_pol, path)
-
-        
-        if err:
-            return []
-
-        return circle
-
-    def last_top_part(self, build_ele):
-
-        base_pol = AllplanGeo.Polygon3D()
-        base_pol += AllplanGeo.Point3D(0, -(build_ele.TopWid.value - build_ele.BottomWid.value) / 2, build_ele.BottHei.value + build_ele.CenterHei.value + build_ele.HeiTopCut.value)
-        base_pol += AllplanGeo.Point3D(0, build_ele.TopWid.value - (build_ele.TopWid.value - build_ele.BottomWid.value) / 2, build_ele.BottHei.value + build_ele.CenterHei.value + build_ele.HeiTopCut.value)
-        base_pol += AllplanGeo.Point3D(0, build_ele.TopWid.value - (build_ele.TopWid.value - build_ele.BottomWid.value) / 2, build_ele.BottHei.value + build_ele.CenterHei.value + build_ele.HeiTop.value)
-        base_pol += AllplanGeo.Point3D(0, build_ele.TopWid.value - (build_ele.TopWid.value - build_ele.BottomWid.value) / 2 - build_ele.Identat.value, build_ele.BottHei.value + build_ele.CenterHei.value + build_ele.HeiTop.value)
-        base_pol += AllplanGeo.Point3D(0, build_ele.TopWid.value - (build_ele.TopWid.value - build_ele.BottomWid.value) / 2 - build_ele.Identat.value, build_ele.BottHei.value + build_ele.CenterHei.value + build_ele.HeiTop.value + build_ele.PlateHei.value)
-        base_pol += AllplanGeo.Point3D(0, - (build_ele.TopWid.value - build_ele.BottomWid.value) / 2 + build_ele.Identat.value, build_ele.BottHei.value + build_ele.CenterHei.value + build_ele.HeiTop.value + build_ele.PlateHei.value)
-        base_pol += AllplanGeo.Point3D(0, - (build_ele.TopWid.value - build_ele.BottomWid.value) / 2 + build_ele.Identat.value, build_ele.BottHei.value + build_ele.CenterHei.value + build_ele.HeiTop.value)
-        base_pol += AllplanGeo.Point3D(0, - (build_ele.TopWid.value - build_ele.BottomWid.value) / 2, build_ele.BottHei.value + build_ele.CenterHei.value + build_ele.HeiTop.value)
-        base_pol += AllplanGeo.Point3D(0, -(build_ele.TopWid.value - build_ele.BottomWid.value) / 2, build_ele.BottHei.value + build_ele.CenterHei.value + build_ele.HeiTopCut.value)
-
-        path = AllplanGeo.Polyline3D()
-        path += AllplanGeo.Point3D(0, -(build_ele.TopWid.value - build_ele.BottomWid.value) / 2, build_ele.BottHei.value + build_ele.CenterHei.value + build_ele.HeiTopCut.value)
-        path += AllplanGeo.Point3D(build_ele.Length.value, -(build_ele.TopWid.value - build_ele.BottomWid.value) / 2, build_ele.BottHei.value + build_ele.CenterHei.value + build_ele.HeiTopCut.value)
-        err, circle = AllplanGeo.Createcircle(base_pol, path)
-
-        
-        if err:
-            return []
-
-        return circle
-
-    def down_part_addi_1(self, build_ele):
-
-        base_pol = AllplanGeo.Polygon3D()
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value, build_ele.BottomWid.value, build_ele.BottHei.value - build_ele.CutBottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value, 
-                                    build_ele.BottomWid.value - build_ele.CutBottLength.value - (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2,
-                                    build_ele.BottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value, 
-                                    build_ele.BottomWid.value - build_ele.CutBottLength.value - (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2 - build_ele.WidthTinyPart.value,
-                                    build_ele.BottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value, 0, build_ele.BottHei.value - build_ele.CutBottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value, build_ele.BottomWid.value, build_ele.BottHei.value - build_ele.CutBottHei.value)
-
-        path = AllplanGeo.Polyline3D()
-        path += AllplanGeo.Point3D(build_ele.CenterWidLength.value, build_ele.BottomWid.value, build_ele.BottHei.value - build_ele.CutBottHei.value)
-        path += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.BottomWid.value, build_ele.BottHei.value - build_ele.CutBottHei.value)
-        err, circle = AllplanGeo.Createcircle(base_pol, path)
-
-        if err:
-            return []
-
-        return circle
     
-    def down_part_addi_2(self, build_ele):
+    def create_nizhnya_chast_LABA3(self, sozd_element):
 
-        base_pol = AllplanGeo.Polygon3D()
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value, build_ele.BottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value + build_ele.TransitLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value - (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, build_ele.BottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value + build_ele.TransitLength.value + (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, build_ele.BottomWid.value - (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, build_ele.BottHei.value - build_ele.CutBottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value + (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, build_ele.BottomWid.value, build_ele.BottHei.value - build_ele.CutBottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value, build_ele.BottHei.value)
+        kolo = self.nizhnya_chast_addi_1(sozd_element)
+        pomylka, kolo = AllplanGeo.MakeUnion(kolo, self.nizhnya_chast_addi_2(sozd_element))
+        pomylka, kolo = AllplanGeo.MakeUnion(kolo, self.nizhnya_chast_addi_3(sozd_element))
+        pomylka, kolo = AllplanGeo.MakeUnion(kolo, self.nizhnya_chast_addi_4(sozd_element))
+        pomylka, kolo = AllplanGeo.MakeUnion(kolo, self.nizhnya_chast_addi_2_2(sozd_element))
+        pomylka, kolo = AllplanGeo.MakeUnion(kolo, self.nizhnya_chast_addi_3_2(sozd_element))
+        pomylka, kolo = AllplanGeo.MakeUnion(kolo, self.nizhnya_chast_addi_4_2(sozd_element))
+        pomylka, kolo = AllplanGeo.MakeUnion(kolo, self.nizhnya_chast_addi_2_3(sozd_element))
+        pomylka, kolo = AllplanGeo.MakeUnion(kolo, self.nizhnya_chast_addi_3_3(sozd_element))
+        pomylka, kolo = AllplanGeo.MakeUnion(kolo, self.nizhnya_chast_addi_2_4(sozd_element))
+        pomylka, kolo = AllplanGeo.MakeUnion(kolo, self.nizhnya_chast_addi_3_4(sozd_element))
+        pomylka, kolo = AllplanGeo.MakeUnion(kolo, self.ost_nizhnya_chast(sozd_element))
+        return kolo
+
+    def create_central_chast_LABA3(self, sozd_element):
+
+        basepoligon3D = AllplanGeo.Polygon3D()
+        basepoligon3D += AllplanGeo.Point3D(0, sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(0, sozd_element.BottomWid.value - sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value + sozd_element.TransitLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value - (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2,sozd_element.BottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - (sozd_element.CenterWidLength.value + sozd_element.TransitLength.value),sozd_element.BottomWid.value - sozd_element.CutBottLength.value - (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, sozd_element.BottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value,sozd_element.BottomWid.value - sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value, sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value - sozd_element.TransitLength.value,sozd_element.CutBottLength.value + (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, sozd_element.BottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value + sozd_element.TransitLength.value, sozd_element.CutBottLength.value + (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2,sozd_element.BottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value,sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(0, sozd_element.CutBottLength.value, sozd_element.BottHei.value)
 
 
-        path = AllplanGeo.Polyline3D()
-        path += AllplanGeo.Point3D(build_ele.CenterWidLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value, build_ele.BottHei.value)
-        path += AllplanGeo.Point3D(build_ele.CenterWidLength.value - 10 , build_ele.BottomWid.value - build_ele.CutBottLength.value - 10, build_ele.BottHei.value - 10)
+        pathernern = AllplanGeo.Polyline3D()
+        pathernern += AllplanGeo.Point3D(0, sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        pathernern += AllplanGeo.Point3D(0, sozd_element.CutBottLength.value, sozd_element.BottHei.value + sozd_element.CenterHei.value)
 
-        err, circle = AllplanGeo.Createcircle(base_pol, path)
+        pomylka, kolo = AllplanGeo.Createkolo(basepoligon3D, pathernern)
 
-        
-        if err:
+        if pomylka:
             return []
 
-        return circle
+        return kolo
 
+    def create_vehniy_chast_LABA3(self, sozd_element):
 
-    def down_part_addi_3(self, build_ele):
+        kolo = self.vehniy_chast_addi_1(sozd_element)
+        pomylka, kolo = AllplanGeo.MakeUnion(kolo, self.vehniy_chast_addi_3(sozd_element))
+        pomylka, kolo = AllplanGeo.MakeUnion(kolo, self.vehniy_chast_addi_2(sozd_element))
+        pomylka, kolo = AllplanGeo.MakeUnion(kolo, self.vehniy_chast_addi_3(sozd_element, plus=(sozd_element.Length.value - sozd_element.CenterWidLength.value)))
+        pomylka, kolo = AllplanGeo.MakeUnion(kolo, self.vehniy_chast_addi_4(sozd_element))
+        pomylka, kolo = AllplanGeo.MakeUnion(kolo, self.vehniy_chast_addi_2_2(sozd_element))
+        pomylka, kolo = AllplanGeo.MakeUnion(kolo, self.vehniy_chast_addi_4(sozd_element, sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2, sozd_element.vehniyWid.value, 10))
+        pomylka, kolo = AllplanGeo.MakeUnion(kolo, self.vehniy_chast_addi_2_3(sozd_element))
+        pomylka, kolo = AllplanGeo.MakeUnion(kolo, self.vehniy_chast_addi_4_2(sozd_element))
+        pomylka, kolo = AllplanGeo.MakeUnion(kolo, self.vehniy_chast_addi_4_2(sozd_element, sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2, sozd_element.vehniyWid.value, 10))
+        pomylka, kolo = AllplanGeo.MakeUnion(kolo, self.vehniy_chast_addi_3_3(sozd_element))
+        pomylka, kolo = AllplanGeo.MakeUnion(kolo, self.last_vehniy_chast(sozd_element))
+        return kolo
 
-        base_pol = AllplanGeo.Polygon3D()
-        base_pol += AllplanGeo.Point3D(0, build_ele.BottomWid.value, build_ele.BottHei.value - build_ele.CutBottHei.value)
-        base_pol += AllplanGeo.Point3D(0, build_ele.BottomWid.value - build_ele.CutBottLength.value, build_ele.BottHei.value)
-        base_pol += AllplanGeo.Point3D(0, build_ele.CutBottLength.value, build_ele.BottHei.value)
-        base_pol += AllplanGeo.Point3D(0, 0, build_ele.BottHei.value - build_ele.CutBottHei.value)
-        base_pol += AllplanGeo.Point3D(0, build_ele.BottomWid.value, build_ele.BottHei.value - build_ele.CutBottHei.value)
+    def vehniy_chast_addi_1(self, sozd_element):
 
-        path = AllplanGeo.Polyline3D()
-        path += AllplanGeo.Point3D(0, build_ele.BottomWid.value, build_ele.BottHei.value - build_ele.CutBottHei.value)
-        path += AllplanGeo.Point3D(build_ele.CenterWidLength.value, build_ele.BottomWid.value, build_ele.BottHei.value - build_ele.CutBottHei.value)
-
-        err, circle = AllplanGeo.Createcircle(base_pol, path)
-
+        basepoligon3D = AllplanGeo.Polygon3D()
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value - (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, sozd_element.BottHei.value + sozd_element.CenterHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.vehniyWid.value - (sozd_element.vehniyWid.value - sozd_element.BottomWid.value) / 2, sozd_element.BottHei.value + sozd_element.CenterHei.value + sozd_element.HeivehniyCut.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value,(sozd_element.vehniyWid.value - sozd_element.BottomWid.value) / 2,sozd_element.BottHei.value + sozd_element.CenterHei.value + sozd_element.HeivehniyCut.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.CutBottLength.value + (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2,sozd_element.BottHei.value + sozd_element.CenterHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value - (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2,sozd_element.BottHei.value + sozd_element.CenterHei.value)
         
-        if err:
+        pathern = AllplanGeo.Polyline3D()
+        pathern += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value - (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2,sozd_element.BottHei.value + sozd_element.CenterHei.value)
+        pathern += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value,  sozd_element.BottomWid.value - sozd_element.CutBottLength.value - (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2,  sozd_element.BottHei.value + sozd_element.CenterHei.value)
+        
+        pomylka, kolo = AllplanGeo.Createkolo(basepoligon3D, pathern)
+
+        if pomylka:
             return []
 
-        return circle
+        return kolo
 
-    def down_part_addi_4(self, build_ele):
+    def vehniy_chast_addi_2(self, sozd_element):
 
-        base_pol = AllplanGeo.Polygon3D()
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value, build_ele.BottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value, build_ele.BottomWid.value, build_ele.BottHei.value - build_ele.CutBottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value + (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, build_ele.BottomWid.value, build_ele.BottHei.value - build_ele.CutBottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value, build_ele.BottHei.value)
-        
-        path = AllplanGeo.Polyline3D()
-        path += AllplanGeo.Point3D(build_ele.CenterWidLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value, build_ele.BottHei.value)
-        path += AllplanGeo.Point3D(build_ele.CenterWidLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value - 10, build_ele.BottHei.value)
-
-        err, circle = AllplanGeo.Createcircle(base_pol, path)
-
-        if err:
-            return []
-
-        return circle
-
-    def down_part_addi_2_2(self, build_ele):
-
-        base_pol = AllplanGeo.Polygon3D()
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value, build_ele.CutBottLength.value, build_ele.BottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value + build_ele.TransitLength.value, build_ele.CutBottLength.value + (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, build_ele.BottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value + build_ele.TransitLength.value + (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, build_ele.BottHei.value - build_ele.CutBottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value + (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, 0, build_ele.BottHei.value - build_ele.CutBottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value,build_ele.CutBottLength.value, build_ele.BottHei.value)
+        basepoligon3D = AllplanGeo.Polygon3D()
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value, sozd_element.BottHei.value + sozd_element.CenterHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value - sozd_element.TransitLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value - (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2 , sozd_element.BottHei.value + sozd_element.CenterHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value - sozd_element.TransitLength.value - (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2 , sozd_element.BottomWid.value - (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2 + (sozd_element.vehniyWid.value - sozd_element.BottomWid.value) / 2, sozd_element.BottHei.value + sozd_element.CenterHei.value + sozd_element.HeivehniyCut.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value - (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, sozd_element.BottomWid.value + (sozd_element.vehniyWid.value - sozd_element.BottomWid.value) / 2, sozd_element.BottHei.value + sozd_element.CenterHei.value + sozd_element.HeivehniyCut.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value, sozd_element.BottHei.value + sozd_element.CenterHei.value)
 
 
-        path = AllplanGeo.Polyline3D()
-        path += AllplanGeo.Point3D(build_ele.CenterWidLength.value,build_ele.CutBottLength.value, build_ele.BottHei.value)
-        path += AllplanGeo.Point3D(build_ele.CenterWidLength.value - 10 ,build_ele.CutBottLength.value + 10, build_ele.BottHei.value - 10)
+        pathern = AllplanGeo.Polyline3D()
+        pathern += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value, sozd_element.BottHei.value + sozd_element.CenterHei.value)
+        pathern += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value + 10, sozd_element.BottomWid.value - sozd_element.CutBottLength.value - 10, sozd_element.BottHei.value + sozd_element.CenterHei.value + 10)
 
-        err, circle = AllplanGeo.Createcircle(base_pol, path)
+        pomylka, kolo = AllplanGeo.Createkolo(basepoligon3D, pathern)
 
         
-        if err:
+        if pomylka:
             return []
 
-        return circle
+        return kolo
 
-    def down_part_addi_3_2(self, build_ele):
+    def vehniy_chast_addi_3(self, sozd_element, plus=0):
 
-        base_pol = AllplanGeo.Polygon3D()
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.BottomWid.value, build_ele.BottHei.value - build_ele.CutBottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value, build_ele.BottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.CutBottLength.value, build_ele.BottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, 0, build_ele.BottHei.value - build_ele.CutBottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.BottomWid.value, build_ele.BottHei.value - build_ele.CutBottHei.value)
+        basepoligon3D = AllplanGeo.Polygon3D()
+        basepoligon3D += AllplanGeo.Point3D(plus, sozd_element.CutBottLength.value, sozd_element.BottHei.value + sozd_element.CenterHei.value)
+        basepoligon3D += AllplanGeo.Point3D(plus, sozd_element.BottomWid.value - sozd_element.CutBottLength.value, sozd_element.BottHei.value + sozd_element.CenterHei.value)
+        basepoligon3D += AllplanGeo.Point3D(plus, sozd_element.BottomWid.value + (sozd_element.vehniyWid.value - sozd_element.BottomWid.value) / 2, sozd_element.BottHei.value + sozd_element.CenterHei.value + sozd_element.HeivehniyCut.value)
+        basepoligon3D += AllplanGeo.Point3D(plus, -(sozd_element.vehniyWid.value - sozd_element.BottomWid.value) / 2, sozd_element.BottHei.value + sozd_element.CenterHei.value + sozd_element.HeivehniyCut.value)
+        basepoligon3D += AllplanGeo.Point3D(plus, sozd_element.CutBottLength.value, sozd_element.BottHei.value + sozd_element.CenterHei.value)
 
-        path = AllplanGeo.Polyline3D()
-        path += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.BottomWid.value, build_ele.BottHei.value - build_ele.CutBottHei.value)
-        path += AllplanGeo.Point3D(build_ele.Length.value, build_ele.BottomWid.value, build_ele.BottHei.value - build_ele.CutBottHei.value)
+        pathern = AllplanGeo.Polyline3D()
+        pathern += AllplanGeo.Point3D(plus, sozd_element.CutBottLength.value, sozd_element.BottHei.value + sozd_element.CenterHei.value)
+        pathern += AllplanGeo.Point3D(plus + sozd_element.CenterWidLength.value, sozd_element.CutBottLength.value, sozd_element.BottHei.value + sozd_element.CenterHei.value)
 
-        err, circle = AllplanGeo.Createcircle(base_pol, path)
+        pomylka, kolo = AllplanGeo.Createkolo(basepoligon3D, pathern)
 
         
-        if err:
+        if pomylka:
             return []
 
-        return circle
+        return kolo
 
-    def down_part_addi_4_2(self, build_ele):
+    def vehniy_chast_addi_4(self, sozd_element, minus_1 = 0, minus_2 = 0, digit = -10):
 
-        base_pol = AllplanGeo.Polygon3D()
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value, build_ele.CutBottLength.value, build_ele.BottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value, 0, build_ele.BottHei.value - build_ele.CutBottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value + (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, 0, build_ele.BottHei.value - build_ele.CutBottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.CenterWidLength.value, build_ele.CutBottLength.value, build_ele.BottHei.value)
-        
-        path = AllplanGeo.Polyline3D()
-        path += AllplanGeo.Point3D(build_ele.CenterWidLength.value, build_ele.CutBottLength.value, build_ele.BottHei.value)
-        path += AllplanGeo.Point3D(build_ele.CenterWidLength.value, build_ele.CutBottLength.value + 10, build_ele.BottHei.value)
-
-        err, circle = AllplanGeo.Createcircle(base_pol, path)
-
-        if err:
-            return []
-
-        return circle
-
-    def down_part_addi_2_3(self, build_ele):
-
-        base_pol = AllplanGeo.Polygon3D()
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value, build_ele.BottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value - build_ele.TransitLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value - (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, build_ele.BottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value - build_ele.TransitLength.value - (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, build_ele.BottomWid.value - (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, build_ele.BottHei.value - build_ele.CutBottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value - (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, build_ele.BottomWid.value, build_ele.BottHei.value - build_ele.CutBottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value, build_ele.BottHei.value)
+        basepoligon3D = AllplanGeo.Polygon3D()
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value - minus_1, sozd_element.BottHei.value + sozd_element.CenterHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.vehniyWid.value - (sozd_element.vehniyWid.value - sozd_element.BottomWid.value) / 2 - minus_2, sozd_element.BottHei.value + sozd_element.CenterHei.value + sozd_element.HeivehniyCut.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value - (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, sozd_element.BottomWid.value + (sozd_element.vehniyWid.value - sozd_element.BottomWid.value) / 2 - minus_2, sozd_element.BottHei.value + sozd_element.CenterHei.value + sozd_element.HeivehniyCut.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value - minus_1, sozd_element.BottHei.value + sozd_element.CenterHei.value)
 
 
-        path = AllplanGeo.Polyline3D()
-        path += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value, build_ele.BottHei.value)
-        path += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value + 10, build_ele.BottomWid.value - build_ele.CutBottLength.value - 10, build_ele.BottHei.value + 10)
-
-        err, circle = AllplanGeo.Createcircle(base_pol, path)
+        pathern = AllplanGeo.Polyline3D()
+        pathern += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value - minus_1, sozd_element.BottHei.value + sozd_element.CenterHei.value)
+        pathern += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value + digit - minus_1, sozd_element.BottHei.value + sozd_element.CenterHei.value)
+        print(basepoligon3D)
+        print(pathern)
+        pomylka, kolo = AllplanGeo.Createkolo(basepoligon3D, pathern)
 
         
-        if err:
+        if pomylka:
             return []
 
-        return circle
+        return kolo
 
-    def down_part_addi_3_3(self, build_ele):
+    def vehniy_chast_addi_2_2(self, sozd_element):
 
-        base_pol = AllplanGeo.Polygon3D()
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value, build_ele.BottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.BottomWid.value, build_ele.BottHei.value - build_ele.CutBottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value - (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, build_ele.BottomWid.value, build_ele.BottHei.value - build_ele.CutBottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value, build_ele.BottHei.value)
+        basepoligon3D = AllplanGeo.Polygon3D()
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.CutBottLength.value, sozd_element.BottHei.value + sozd_element.CenterHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value - sozd_element.TransitLength.value, sozd_element.CutBottLength.value + (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, sozd_element.BottHei.value + sozd_element.CenterHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value - sozd_element.TransitLength.value - (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2 - (sozd_element.vehniyWid.value - sozd_element.BottomWid.value) / 2, sozd_element.BottHei.value + sozd_element.CenterHei.value + sozd_element.HeivehniyCut.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value - (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, -(sozd_element.vehniyWid.value - sozd_element.BottomWid.value) / 2, sozd_element.BottHei.value + sozd_element.CenterHei.value + sozd_element.HeivehniyCut.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.CutBottLength.value, sozd_element.BottHei.value + sozd_element.CenterHei.value)
 
 
-        path = AllplanGeo.Polyline3D()
-        path += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value, build_ele.BottHei.value)
-        path += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.BottomWid.value - build_ele.CutBottLength.value - 10, build_ele.BottHei.value)
+        pathern = AllplanGeo.Polyline3D()
+        pathern += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.CutBottLength.value, sozd_element.BottHei.value + sozd_element.CenterHei.value)
+        pathern += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value + 10, sozd_element.CutBottLength.value + 10, sozd_element.BottHei.value + sozd_element.CenterHei.value + 10)
 
-        err, circle = AllplanGeo.Createcircle(base_pol, path)
+        pomylka, kolo = AllplanGeo.Createkolo(basepoligon3D, pathern)
 
         
-        if err:
+        if pomylka:
             return []
 
-        return circle
+        return kolo
 
-    def down_part_addi_2_4(self, build_ele):
+    def vehniy_chast_addi_2_3(self, sozd_element):
 
-        base_pol = AllplanGeo.Polygon3D()
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.CutBottLength.value, build_ele.BottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value - build_ele.TransitLength.value, build_ele.CutBottLength.value + (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, build_ele.BottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value - build_ele.TransitLength.value - (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, build_ele.BottHei.value - build_ele.CutBottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value - (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, 0, build_ele.BottHei.value - build_ele.CutBottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.CutBottLength.value, build_ele.BottHei.value)
+        basepoligon3D = AllplanGeo.Polygon3D()
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value, sozd_element.BottHei.value + sozd_element.CenterHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value + sozd_element.TransitLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value - (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, sozd_element.BottHei.value + sozd_element.CenterHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value + sozd_element.TransitLength.value + (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, sozd_element.BottomWid.value - (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2 + (sozd_element.vehniyWid.value - sozd_element.BottomWid.value) / 2, sozd_element.BottHei.value + sozd_element.CenterHei.value + sozd_element.HeivehniyCut.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value + (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, sozd_element.BottomWid.value + (sozd_element.vehniyWid.value - sozd_element.BottomWid.value) / 2, sozd_element.BottHei.value + sozd_element.CenterHei.value + sozd_element.HeivehniyCut.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value, sozd_element.BottHei.value + sozd_element.CenterHei.value)
 
 
-        path = AllplanGeo.Polyline3D()
-        path += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.CutBottLength.value, build_ele.BottHei.value)
-        path += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value - 10, build_ele.CutBottLength.value + 10, build_ele.BottHei.value - 10)
+        pathern = AllplanGeo.Polyline3D()
+        pathern += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value, sozd_element.BottHei.value + sozd_element.CenterHei.value)
+        pathern += AllplanGeo.Point3D(sozd_element.CenterWidLength.value - 10, sozd_element.BottomWid.value - sozd_element.CutBottLength.value - 10, sozd_element.BottHei.value + sozd_element.CenterHei.value - 10)
 
-        err, circle = AllplanGeo.Createcircle(base_pol, path)
+        pomylka, kolo = AllplanGeo.Createkolo(basepoligon3D, pathern)
 
         
-        if err:
+        if pomylka:
             return []
 
-        return circle
+        return kolo
 
-    def down_part_addi_3_4(self, build_ele):
+    def vehniy_chast_addi_4_2(self, sozd_element, minus_1 = 0, minus_2 = 0, digit = -10):
 
-        base_pol = AllplanGeo.Polygon3D()
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.CutBottLength.value, build_ele.BottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, 0, build_ele.BottHei.value - build_ele.CutBottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value - (build_ele.BottomWid.value - build_ele.CutBottLength.value * 2 - build_ele.WidthTinyPart.value) / 2, 0, build_ele.BottHei.value - build_ele.CutBottHei.value)
-        base_pol += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.CutBottLength.value, build_ele.BottHei.value)
+        basepoligon3D = AllplanGeo.Polygon3D()
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value - minus_1, sozd_element.BottHei.value + sozd_element.CenterHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.BottomWid.value + (sozd_element.vehniyWid.value - sozd_element.BottomWid.value) / 2 - minus_2, sozd_element.BottHei.value + sozd_element.CenterHei.value + sozd_element.HeivehniyCut.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value + (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, sozd_element.BottomWid.value + (sozd_element.vehniyWid.value - sozd_element.BottomWid.value) / 2 - minus_2, sozd_element.BottHei.value + sozd_element.CenterHei.value + sozd_element.HeivehniyCut.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value - minus_1, sozd_element.BottHei.value + sozd_element.CenterHei.value)
+        
+        pathern = AllplanGeo.Polyline3D()
+        pathern += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value - minus_1, sozd_element.BottHei.value + sozd_element.CenterHei.value)
+        pathern += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value - minus_1 + digit, sozd_element.BottHei.value + sozd_element.CenterHei.value)
+
+        pomylka, kolo = AllplanGeo.Createkolo(basepoligon3D, pathern)
+
+        if pomylka:
+            return []
+
+        return kolo
+
+    def vehniy_chast_addi_3_3(self, sozd_element):
+
+        basepoligon3D = AllplanGeo.Polygon3D()
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.CutBottLength.value, sozd_element.BottHei.value + sozd_element.CenterHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value + sozd_element.TransitLength.value, sozd_element.CutBottLength.value + (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, sozd_element.BottHei.value + sozd_element.CenterHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value + sozd_element.TransitLength.value + (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2 - (sozd_element.vehniyWid.value - sozd_element.BottomWid.value) / 2, sozd_element.BottHei.value + sozd_element.CenterHei.value + sozd_element.HeivehniyCut.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value + (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, -(sozd_element.vehniyWid.value - sozd_element.BottomWid.value) / 2, sozd_element.BottHei.value + sozd_element.CenterHei.value + sozd_element.HeivehniyCut.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.CutBottLength.value, sozd_element.BottHei.value + sozd_element.CenterHei.value)
 
 
-        path = AllplanGeo.Polyline3D()
-        path += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.CutBottLength.value, build_ele.BottHei.value)
-        path += AllplanGeo.Point3D(build_ele.Length.value - build_ele.CenterWidLength.value, build_ele.CutBottLength.value + 10, build_ele.BottHei.value)
+        pathern = AllplanGeo.Polyline3D()
+        pathern += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.CutBottLength.value, sozd_element.BottHei.value + sozd_element.CenterHei.value)
+        pathern += AllplanGeo.Point3D(sozd_element.CenterWidLength.value - 10, sozd_element.CutBottLength.value + 10, sozd_element.BottHei.value + sozd_element.CenterHei.value - 10)
 
-        err, circle = AllplanGeo.Createcircle(base_pol, path)
+        pomylka, kolo = AllplanGeo.Createkolo(basepoligon3D, pathern)
 
         
-        if err:
+        if pomylka:
             return []
 
-        return circle
+        return kolo
 
-    def last_down_part(self, build_ele):
+    def last_vehniy_chast(self, sozd_element):
 
-        base_pol = AllplanGeo.Polygon3D()
-        base_pol += AllplanGeo.Point3D(0, 20, 0)
-        base_pol += AllplanGeo.Point3D(0, build_ele.BottomWid.value - 20, 0)
-        base_pol += AllplanGeo.Point3D(0, build_ele.BottomWid.value, 20)
-        base_pol += AllplanGeo.Point3D(0, build_ele.BottomWid.value, build_ele.BottHei.value - build_ele.CutBottHei.value)
-        base_pol += AllplanGeo.Point3D(0, 0, build_ele.BottHei.value - build_ele.CutBottHei.value)
-        base_pol += AllplanGeo.Point3D(0, 0, 20)
-        base_pol += AllplanGeo.Point3D(0, 20, 0)
+        basepoligon3D = AllplanGeo.Polygon3D()
+        basepoligon3D += AllplanGeo.Point3D(0, -(sozd_element.vehniyWid.value - sozd_element.BottomWid.value) / 2, sozd_element.BottHei.value + sozd_element.CenterHei.value + sozd_element.HeivehniyCut.value)
+        basepoligon3D += AllplanGeo.Point3D(0, sozd_element.vehniyWid.value - (sozd_element.vehniyWid.value - sozd_element.BottomWid.value) / 2, sozd_element.BottHei.value + sozd_element.CenterHei.value + sozd_element.HeivehniyCut.value)
+        basepoligon3D += AllplanGeo.Point3D(0, sozd_element.vehniyWid.value - (sozd_element.vehniyWid.value - sozd_element.BottomWid.value) / 2, sozd_element.BottHei.value + sozd_element.CenterHei.value + sozd_element.Heivehniy.value)
+        basepoligon3D += AllplanGeo.Point3D(0, sozd_element.vehniyWid.value - (sozd_element.vehniyWid.value - sozd_element.BottomWid.value) / 2 - sozd_element.Identat.value, sozd_element.BottHei.value + sozd_element.CenterHei.value + sozd_element.Heivehniy.value)
+        basepoligon3D += AllplanGeo.Point3D(0, sozd_element.vehniyWid.value - (sozd_element.vehniyWid.value - sozd_element.BottomWid.value) / 2 - sozd_element.Identat.value, sozd_element.BottHei.value + sozd_element.CenterHei.value + sozd_element.Heivehniy.value + sozd_element.PlateHei.value)
+        basepoligon3D += AllplanGeo.Point3D(0, - (sozd_element.vehniyWid.value - sozd_element.BottomWid.value) / 2 + sozd_element.Identat.value, sozd_element.BottHei.value + sozd_element.CenterHei.value + sozd_element.Heivehniy.value + sozd_element.PlateHei.value)
+        basepoligon3D += AllplanGeo.Point3D(0, - (sozd_element.vehniyWid.value - sozd_element.BottomWid.value) / 2 + sozd_element.Identat.value, sozd_element.BottHei.value + sozd_element.CenterHei.value + sozd_element.Heivehniy.value)
+        basepoligon3D += AllplanGeo.Point3D(0, - (sozd_element.vehniyWid.value - sozd_element.BottomWid.value) / 2, sozd_element.BottHei.value + sozd_element.CenterHei.value + sozd_element.Heivehniy.value)
+        basepoligon3D += AllplanGeo.Point3D(0, -(sozd_element.vehniyWid.value - sozd_element.BottomWid.value) / 2, sozd_element.BottHei.value + sozd_element.CenterHei.value + sozd_element.HeivehniyCut.value)
 
-        if not GeometryValidate.is_valid(base_pol):
+        pathern = AllplanGeo.Polyline3D()
+        pathern += AllplanGeo.Point3D(0, -(sozd_element.vehniyWid.value - sozd_element.BottomWid.value) / 2, sozd_element.BottHei.value + sozd_element.CenterHei.value + sozd_element.HeivehniyCut.value)
+        pathern += AllplanGeo.Point3D(sozd_element.Length.value, -(sozd_element.vehniyWid.value - sozd_element.BottomWid.value) / 2, sozd_element.BottHei.value + sozd_element.CenterHei.value + sozd_element.HeivehniyCut.value)
+        pomylka, kolo = AllplanGeo.Createkolo(basepoligon3D, pathern)
+
+        
+        if pomylka:
+            return []
+
+        return kolo
+
+    def nizhniy_chast_addi_1(self, sozd_element):
+
+        basepoligon3D = AllplanGeo.Polygon3D()
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.BottomWid.value, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value,  sozd_element.BottomWid.value - sozd_element.CutBottLength.value - (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, sozd_element.BottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value,  sozd_element.BottomWid.value - sozd_element.CutBottLength.value - (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2 - sozd_element.WidthTinychast.value, sozd_element.BottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, 0, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.BottomWid.value, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+
+        pathern = AllplanGeo.Polyline3D()
+        pathern += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.BottomWid.value, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+        pathern += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.BottomWid.value, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+        pomylka, kolo = AllplanGeo.Createkolo(basepoligon3D, pathern)
+
+        if pomylka:
+            return []
+
+        return kolo
+    
+    def nizhniy_chast_addi_2(self, sozd_element):
+
+        basepoligon3D = AllplanGeo.Polygon3D()
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value + sozd_element.TransitLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value - (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, sozd_element.BottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value + sozd_element.TransitLength.value + (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, sozd_element.BottomWid.value - (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value + (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, sozd_element.BottomWid.value, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+
+
+        pathern = AllplanGeo.Polyline3D()
+        pathern += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        pathern += AllplanGeo.Point3D(sozd_element.CenterWidLength.value - 10 , sozd_element.BottomWid.value - sozd_element.CutBottLength.value - 10, sozd_element.BottHei.value - 10)
+
+        pomylka, kolo = AllplanGeo.Createkolo(basepoligon3D, pathern)
+
+        
+        if pomylka:
+            return []
+
+        return kolo
+
+
+    def nizhniy_chast_addi_3(self, sozd_element):
+
+        basepoligon3D = AllplanGeo.Polygon3D()
+        basepoligon3D += AllplanGeo.Point3D(0, sozd_element.BottomWid.value, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(0, sozd_element.BottomWid.value - sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(0, sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(0, 0, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(0, sozd_element.BottomWid.value, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+
+        pathern = AllplanGeo.Polyline3D()
+        pathern += AllplanGeo.Point3D(0, sozd_element.BottomWid.value, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+        pathern += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.BottomWid.value, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+
+        pomylka, kolo = AllplanGeo.Createkolo(basepoligon3D, pathern)
+
+        
+        if pomylka:
+            return []
+
+        return kolo
+
+    def nizhniy_chast_addi_4(self, sozd_element):
+
+        basepoligon3D = AllplanGeo.Polygon3D()
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.BottomWid.value, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value + (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, sozd_element.BottomWid.value, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        
+        pathern = AllplanGeo.Polyline3D()
+        pathern += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        pathern += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value - 10, sozd_element.BottHei.value)
+
+        pomylka, kolo = AllplanGeo.Createkolo(basepoligon3D, pathern)
+
+        if pomylka:
+            return []
+
+        return kolo
+
+    def nizhniy_chast_addi_2_2(self, sozd_element):
+
+        basepoligon3D = AllplanGeo.Polygon3D()
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value + sozd_element.TransitLength.value, sozd_element.CutBottLength.value + (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, sozd_element.BottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value + sozd_element.TransitLength.value + (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value + (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, 0, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value,sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+
+
+        pathern = AllplanGeo.Polyline3D()
+        pathern += AllplanGeo.Point3D(sozd_element.CenterWidLength.value,sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        pathern += AllplanGeo.Point3D(sozd_element.CenterWidLength.value - 10 ,sozd_element.CutBottLength.value + 10, sozd_element.BottHei.value - 10)
+
+        pomylka, kolo = AllplanGeo.Createkolo(basepoligon3D, pathern)
+
+        
+        if pomylka:
+            return []
+
+        return kolo
+
+    def nizhniy_chast_addi_3_2(self, sozd_element):
+
+        basepoligon3D = AllplanGeo.Polygon3D()
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.BottomWid.value, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, 0, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.BottomWid.value, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+
+        pathern = AllplanGeo.Polyline3D()
+        pathern += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.BottomWid.value, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+        pathern += AllplanGeo.Point3D(sozd_element.Length.value, sozd_element.BottomWid.value, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+
+        pomylka, kolo = AllplanGeo.Createkolo(basepoligon3D, pathern)
+
+        
+        if pomylka:
+            return []
+
+        return kolo
+
+    def nizhniy_chast_addi_4_2(self, sozd_element):
+
+        basepoligon3D = AllplanGeo.Polygon3D()
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, 0, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value + (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, 0, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        
+        pathern = AllplanGeo.Polyline3D()
+        pathern += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        pathern += AllplanGeo.Point3D(sozd_element.CenterWidLength.value, sozd_element.CutBottLength.value + 10, sozd_element.BottHei.value)
+
+        pomylka, kolo = AllplanGeo.Createkolo(basepoligon3D, pathern)
+
+        if pomylka:
+            return []
+
+        return kolo
+
+    def nizhniy_chast_addi_2_3(self, sozd_element):
+
+        basepoligon3D = AllplanGeo.Polygon3D()
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value - sozd_element.TransitLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value - (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, sozd_element.BottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value - sozd_element.TransitLength.value - (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, sozd_element.BottomWid.value - (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value - (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, sozd_element.BottomWid.value, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+
+
+        pathern = AllplanGeo.Polyline3D()
+        pathern += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        pathern += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value + 10, sozd_element.BottomWid.value - sozd_element.CutBottLength.value - 10, sozd_element.BottHei.value + 10)
+
+        pomylka, kolo = AllplanGeo.Createkolo(basepoligon3D, pathern)
+
+        
+        if pomylka:
+            return []
+
+        return kolo
+
+    def nizhniy_chast_addi_3_3(self, sozd_element):
+
+        basepoligon3D = AllplanGeo.Polygon3D()
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.BottomWid.value, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value - (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, sozd_element.BottomWid.value, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+
+
+        pathern = AllplanGeo.Polyline3D()
+        pathern += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        pathern += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.BottomWid.value - sozd_element.CutBottLength.value - 10, sozd_element.BottHei.value)
+
+        pomylka, kolo = AllplanGeo.Createkolo(basepoligon3D, pathern)
+
+        
+        if pomylka:
+            return []
+
+        return kolo
+
+    def nizhniy_chast_addi_2_4(self, sozd_element):
+
+        basepoligon3D = AllplanGeo.Polygon3D()
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value - sozd_element.TransitLength.value, sozd_element.CutBottLength.value + (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, sozd_element.BottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value - sozd_element.TransitLength.value - (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value - (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, 0, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+
+
+        pathern = AllplanGeo.Polyline3D()
+        pathern += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        pathern += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value - 10, sozd_element.CutBottLength.value + 10, sozd_element.BottHei.value - 10)
+
+        pomylka, kolo = AllplanGeo.Createkolo(basepoligon3D, pathern)
+
+        
+        if pomylka:
+            return []
+
+        return kolo
+
+    def nizhniy_chast_addi_3_4(self, sozd_element):
+
+        basepoligon3D = AllplanGeo.Polygon3D()
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, 0, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value - (sozd_element.BottomWid.value - sozd_element.CutBottLength.value * 2 - sozd_element.WidthTinychast.value) / 2, 0, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+
+
+        pathern = AllplanGeo.Polyline3D()
+        pathern += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.CutBottLength.value, sozd_element.BottHei.value)
+        pathern += AllplanGeo.Point3D(sozd_element.Length.value - sozd_element.CenterWidLength.value, sozd_element.CutBottLength.value + 10, sozd_element.BottHei.value)
+
+        pomylka, kolo = AllplanGeo.Createkolo(basepoligon3D, pathern)
+
+        
+        if pomylka:
+            return []
+
+        return kolo
+
+    def ost_nizhnya_chast(self, sozd_element):
+
+        basepoligon3D = AllplanGeo.Polygon3D()
+        basepoligon3D += AllplanGeo.Point3D(0, 20, 0)
+        basepoligon3D += AllplanGeo.Point3D(0, sozd_element.BottomWid.value - 20, 0)
+        basepoligon3D += AllplanGeo.Point3D(0, sozd_element.BottomWid.value, 20)
+        basepoligon3D += AllplanGeo.Point3D(0, sozd_element.BottomWid.value, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(0, 0, sozd_element.BottHei.value - sozd_element.CutBottHei.value)
+        basepoligon3D += AllplanGeo.Point3D(0, 0, 20)
+        basepoligon3D += AllplanGeo.Point3D(0, 20, 0)
+
+        if not GeometryValidate.is_valid(basepoligon3D):
             return
 
-        path = AllplanGeo.Polyline3D()
-        path += AllplanGeo.Point3D(0, 20, 0)
-        path += AllplanGeo.Point3D(build_ele.Length.value,20,0)
+        pathern = AllplanGeo.Polyline3D()
+        pathern += AllplanGeo.Point3D(0, 20, 0)
+        pathern += AllplanGeo.Point3D(sozd_element.Length.value,20,0)
 
-        err, circle = AllplanGeo.Createcircle(base_pol, path)
+        pomylka, kolo = AllplanGeo.Createkolo(basepoligon3D, pathern)
 
         
-        if err:
+        if pomylka:
             return []
 
-        return circle
+        return kolo
 
